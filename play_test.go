@@ -15,7 +15,10 @@ func TestPlayWithSimplePods(t *testing.T) {
 	assert.Nil(t, json.Unmarshal([]byte(simpleRule), &ruletree))
 	assert.Len(t, tree, 2)
 	tr.traverse("", tree, ruletree)
-	assert.Nil(t, tr.lastError)
+	assert.Equal(t, 0, tr.errorHistory.Len())
+	assert.Nil(t, tr.errorHistory.Front())
+	assert.Equal(t, 0, tr.falseCounter)
+	assert.Equal(t, 3, tr.trueCounter)
 }
 
 func TestPlayWithFullPods(t *testing.T) {
@@ -25,7 +28,8 @@ func TestPlayWithFullPods(t *testing.T) {
 	assert.Nil(t, json.Unmarshal([]byte(simpleRule), &ruletree))
 	assert.Len(t, tree, 4)
 	tr.traverse("", tree, ruletree)
-	assert.Nil(t, tr.lastError)
+	assert.Equal(t, 0, tr.errorHistory.Len())
+	assert.Nil(t, tr.errorHistory.Front())
 }
 
 func TestMain(m *testing.M) {
