@@ -57,13 +57,21 @@ func (t *Traverse) Length(length string, array []interface{}) {
 // Max compares max to val
 func (t *Traverse) Max(max string, val int) {
 	m, err := strconv.Atoi(max)
-	t.bookkeep(m <= val, err)
+	t.bookkeep(m >= val, err)
 }
 
 // Min compares min to the val
 func (t *Traverse) Min(min string, val int) {
 	m, err := strconv.Atoi(min)
-	t.bookkeep(m >= val, err)
+	t.bookkeep(m <= val, err)
+}
+
+func cutString(i interface{}, l int) string {
+	out := fmt.Sprintf("%s", i)
+	if len(out) > l {
+		return out[0:l] + " ..."
+	}
+	return out
 }
 
 func (t *Traverse) applyRule(offset string, treeValue reflect.Value,
@@ -74,12 +82,18 @@ func (t *Traverse) applyRule(offset string, treeValue reflect.Value,
 		if ok {
 			for k, v := range m {
 				capMethod := strings.Title(k)
-				//				fmt.Printf("%s\t rules %q (%q, %q)\n", offset, capMethod, v, tv)
+
 				method := reflect.ValueOf(t).MethodByName(capMethod)
 				if method.IsValid() {
+					fmt.Printf("%s\t rules %q (%q, %q)\n", offset, capMethod, v, cutString(tv, 40))
 					method.Call([]reflect.Value{reflect.ValueOf(v), reflect.ValueOf(tv)})
 				} else {
-					t.AddError("unknown method %q requested with args(%q, %q)", capMethod, v, tv)
+					switch treeValue.Kind() {
+					case reflect.String, reflect.Float64, reflect.Bool:
+						{
+							t.AddError("unknown method %q requested with args(%q, %q)", capMethod, v, cutString(tv, 40))
+						}
+					}
 				}
 			}
 		} else {
@@ -99,6 +113,7 @@ func (t *Traverse) traverse(offset string, tree interface{}, rules interface{}) 
 	fmt.Printf("\n%s< traverse %v\n", offset, treeValue.Type())
 
 	switch treeValue.Kind() {
+
 	case reflect.Slice, reflect.Array:
 		t.applyRule(offset+" array", treeValue,
 			rulesValue, rules)
@@ -107,6 +122,7 @@ func (t *Traverse) traverse(offset string, tree interface{}, rules interface{}) 
 			index := fmt.Sprintf("%d:", i)
 			t.traverse(offset+index+"\t", vi, rules)
 		}
+
 	case reflect.Map:
 		for k, v := range tree.(map[string]interface{}) {
 			r, ok := rulesValue.Interface().(map[string]interface{})

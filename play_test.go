@@ -44,7 +44,14 @@ var simpleRule = `{
 		"matches": "v"
 	},
 	"items": {
-		"length": "1"
+		"length": "1",
+		"spec":{
+			"containers":{
+				"image":{
+					"matches":"^(gcr.io/(google[-_]containers|k8s-minikube)|k8s.gcr.io)"
+				}
+			}
+		}
 	}
 }
 `
