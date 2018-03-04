@@ -67,7 +67,12 @@ func (t *Traverse) Min(min string, val int) {
 }
 
 func cutString(i interface{}, l int) string {
-	out := fmt.Sprintf("%s", i)
+	var out string
+	if i == nil {
+		out = "nada"
+	} else {
+		out = fmt.Sprintf("%s", i)
+	}
 	if len(out) > l {
 		return out[0:l] + " ..."
 	}
@@ -105,7 +110,7 @@ func (t *Traverse) applyRule(offset string, treeValue reflect.Value,
 
 func (t *Traverse) traverse(offset string, tree interface{}, rules interface{}) {
 	if tree == nil || rules == nil {
-		fmt.Printf(offset+"< traverse t is nil=%t r is nil=%t>\n", tree == nil, rules == nil)
+		//		fmt.Printf(offset+"< traverse t is nil=%t r is nil=%t>\n", tree == nil, rules == nil)
 		return
 	}
 	treeValue := reflect.ValueOf(tree)
@@ -115,11 +120,12 @@ func (t *Traverse) traverse(offset string, tree interface{}, rules interface{}) 
 	switch treeValue.Kind() {
 
 	case reflect.Slice, reflect.Array:
-		t.applyRule(offset+" array", treeValue,
+		t.applyRule(offset, treeValue,
 			rulesValue, rules)
 
 		for i, vi := range tree.([]interface{}) {
 			index := fmt.Sprintf("%d:", i)
+			index = ""
 			t.traverse(offset+index+"\t", vi, rules)
 		}
 
@@ -127,8 +133,10 @@ func (t *Traverse) traverse(offset string, tree interface{}, rules interface{}) 
 		for k, v := range tree.(map[string]interface{}) {
 			r, ok := rulesValue.Interface().(map[string]interface{})
 			if ok {
+				// fmt.Printf("### ok key %q %v =: %q \n", k, cutString(v, 30), cutString(r[k], 30))
 				t.traverse(offset+"\t ", v, r[k])
 			} else {
+				// fmt.Printf("#### not ok")
 				t.applyRule(offset, treeValue, rulesValue, r)
 			}
 		}
