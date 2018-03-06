@@ -115,7 +115,7 @@ func (t *Traverse) traverse(offset string, tree interface{}, rules interface{}) 
 	}
 	treeValue := reflect.ValueOf(tree)
 	rulesValue := reflect.ValueOf(rules)
-	fmt.Printf("\n%s< traverse %v\n", offset, treeValue.Type())
+	fmt.Printf("%s< traverse %v\n", offset, treeValue.Type())
 
 	switch treeValue.Kind() {
 
