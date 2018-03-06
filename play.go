@@ -1,70 +1,16 @@
 package main
 
 import (
-	"container/list"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"reflect"
-	"regexp"
-	"strconv"
 	"strings"
 )
 
 // Traverse is the object collection all data on a traversal
 type Traverse struct {
-	errorHistory              list.List
-	trueCounter, falseCounter int
-}
-
-// AddError adds an error to the list of errors,
-// format and args are format used to create a formatted error message
-func (t *Traverse) AddError(format string, args ...interface{}) {
-	errn := fmt.Sprintf("error #%d: ", t.errorHistory.Len())
-	fmt.Printf(errn+format+"\n", args...)
-	t.errorHistory.PushBack(fmt.Errorf(errn+format, args...))
-}
-
-func (t *Traverse) bookkeep(b bool, err error) {
-	if err == nil {
-		if b {
-			t.trueCounter++
-		} else {
-			t.falseCounter++
-		}
-	} else {
-		errn := fmt.Errorf("error #%d: %s", t.errorHistory.Len(), err.Error())
-		t.errorHistory.PushBack(errn)
-	}
-}
-
-// Equals tracks if both strings are equal
-func (t *Traverse) Equals(ruleValue, treeValue string) {
-	t.bookkeep(ruleValue == treeValue, nil)
-}
-
-// Matches tracks if r matches s as a regular expression
-func (t *Traverse) Matches(r, s string) {
-	match, err := regexp.MatchString(r, s)
-	t.bookkeep(match, err)
-}
-
-// Length compares length to the len of the arry
-func (t *Traverse) Length(length string, array []interface{}) {
-	l, err := strconv.Atoi(length)
-	t.bookkeep(l == len(array), err)
-}
-
-// Max compares max to val
-func (t *Traverse) Max(max string, val int) {
-	m, err := strconv.Atoi(max)
-	t.bookkeep(m >= val, err)
-}
-
-// Min compares min to the val
-func (t *Traverse) Min(min string, val int) {
-	m, err := strconv.Atoi(min)
-	t.bookkeep(m <= val, err)
+	check *Check
 }
 
 func cutString(i interface{}, l int) string {
@@ -89,7 +35,7 @@ func (t *Traverse) applyRule(offset string, treeValue reflect.Value,
 			for k, v := range m {
 				capMethod := strings.Title(k)
 
-				method := reflect.ValueOf(t).MethodByName(capMethod)
+				method := reflect.ValueOf(t.check).MethodByName(capMethod)
 				if method.IsValid() {
 					fmt.Printf("%s\t rules %q (%q, %q)\n", offset, capMethod, v, cutString(tv, 40))
 					method.Call([]reflect.Value{reflect.ValueOf(v), reflect.ValueOf(tv)})
@@ -97,13 +43,13 @@ func (t *Traverse) applyRule(offset string, treeValue reflect.Value,
 					switch treeValue.Kind() {
 					case reflect.String, reflect.Float64, reflect.Bool:
 						{
-							t.AddError("unknown method %q requested with args(%q, %q)", capMethod, v, cutString(tv, 40))
+							t.check.AddError("unknown method %q requested with args(%q, %q)", capMethod, v, cutString(tv, 40))
 						}
 					}
 				}
 			}
 		} else {
-			t.AddError("found unknown rule %v with value %q", rules, rules)
+			t.check.AddError("found unknown rule %v with value %q", rules, rules)
 		}
 	}
 	//	fmt.Printf("# errors %d %d\n", t.falseCounter, t.trueCounter)
@@ -146,7 +92,7 @@ func (t *Traverse) traverse(offset string, tree interface{}, rules interface{}) 
 		t.applyRule(offset, treeValue, rulesValue, rules)
 	default:
 		fmt.Printf(" == unknown %v\n", treeValue)
-		t.AddError("found unknown type %v with value %q", treeValue, treeValue)
+		t.check.AddError("found unknown type %v with value %q", treeValue, treeValue)
 	}
 	fmt.Println(offset + ">")
 }

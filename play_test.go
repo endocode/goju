@@ -54,31 +54,37 @@ func TestPlayFalseSecondFile(t *testing.T) {
 func TestPlayWithoutFile(t *testing.T) {
 	var tree map[string]interface{}
 	var tr Traverse
+	tr.check = &Check{}
+
 	err := ReadFile("notexisting", &tree)
-	tr.bookkeep(true, err)
-	assert.NotNil(t, tr.errorHistory.Front())
+	tr.check.bookkeep(true, err)
+	assert.NotNil(t, tr.check.errorHistory.Front())
 }
 
 func testPodWithRules(t *testing.T, treeFile, ruleFile string,
 	treeLengthExpected, errorLengthExpected,
 	falseExpected, trueExpected int) {
 	var tr Traverse
+	tr.check = &Check{}
+
 	var tree, ruletree map[string]interface{}
 	assert.Nil(t, ReadFile(datafile(treeFile), &tree), treeFile)
 	assert.Nil(t, ReadFile(datafile(ruleFile), &ruletree), ruleFile)
 
 	assert.Len(t, tree, treeLengthExpected, "tree length")
 	tr.traverse("", tree, ruletree)
-	assert.Equal(t, errorLengthExpected, tr.errorHistory.Len(), "errors")
+	assert.Equal(t, errorLengthExpected, tr.check.errorHistory.Len(), "errors")
 	if errorLengthExpected == 0 {
-		assert.Nil(t, tr.errorHistory.Front(), "error history")
+		assert.Nil(t, tr.check.errorHistory.Front(), "error history")
 	}
-	assert.Equal(t, falseExpected, tr.falseCounter, "falseCounter")
-	assert.Equal(t, trueExpected, tr.trueCounter, "trueCounter")
+	assert.Equal(t, falseExpected, tr.check.falseCounter, "falseCounter")
+	assert.Equal(t, trueExpected, tr.check.trueCounter, "trueCounter")
 }
 
 func TestPodWithWrongType(t *testing.T) {
 	var tr Traverse
+	tr.check = &Check{}
+
 	var tree, ruletree map[string]interface{}
 	assert.Nil(t, ReadFile(datafile("itempods"), &tree), "wrongtype")
 	assert.Nil(t, ReadFile(datafile("itemrule"), &ruletree), "wrongtype")
@@ -86,11 +92,11 @@ func TestPodWithWrongType(t *testing.T) {
 	tree["apiVersion"] = tr
 	assert.Len(t, tree, 2, "tree length")
 	tr.traverse("", tree, ruletree)
-	assert.Equal(t, 1, tr.errorHistory.Len(), "errors")
-	assert.NotNil(t, tr.errorHistory.Front(), "error history")
+	assert.Equal(t, 1, tr.check.errorHistory.Len(), "errors")
+	assert.NotNil(t, tr.check.errorHistory.Front(), "error history")
 
-	assert.Equal(t, 0, tr.falseCounter, "falseCounter")
-	assert.Equal(t, 1, tr.trueCounter, "trueCounter")
+	assert.Equal(t, 0, tr.check.falseCounter, "falseCounter")
+	assert.Equal(t, 1, tr.check.trueCounter, "trueCounter")
 }
 func TestMain(m *testing.M) {
 	code := m.Run()
