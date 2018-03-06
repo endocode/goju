@@ -1,20 +1,14 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func readFile(f string, t interface{}) error {
-	b, err := ioutil.ReadFile("data/" + f + ".json")
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(b, &t)
+func datafile(f string) string {
+	return "data/" + f + ".json"
 }
 
 func TestPlayWithSimpleItemArray(t *testing.T) {
@@ -37,10 +31,30 @@ func TestPlayWithUnknownMethod(t *testing.T) {
 	testPodWithRules(t, "itempods", "unknownmethodrule", 2, 1, 0, 0)
 }
 
+func TestPlay(t *testing.T) {
+	args := []string{"play", "data/itempods.json", "data/itemrule.json"}
+	assert.Nil(t, Play(args))
+}
+
+func TestPlayFalseNumberOfArgs(t *testing.T) {
+	args := []string{"data/itempods.json", "data/itemrule.json"}
+	assert.NotNil(t, Play(args))
+}
+
+func TestPlayFalseFirstFile(t *testing.T) {
+	args := []string{"play", "data/nonono.json", "data/itemrule.json"}
+	assert.NotNil(t, Play(args))
+}
+
+func TestPlayFalseSecondFile(t *testing.T) {
+	args := []string{"play", "data/itempods.json", "data/nonono.json"}
+	assert.NotNil(t, Play(args))
+}
+
 func TestPlayWithoutFile(t *testing.T) {
 	var tree map[string]interface{}
 	var tr Traverse
-	err := readFile("notexisting", &tree)
+	err := ReadFile("notexisting", &tree)
 	tr.bookkeep(true, err)
 	assert.NotNil(t, tr.errorHistory.Front())
 }
@@ -50,8 +64,8 @@ func testPodWithRules(t *testing.T, treeFile, ruleFile string,
 	falseExpected, trueExpected int) {
 	var tr Traverse
 	var tree, ruletree map[string]interface{}
-	assert.Nil(t, readFile(treeFile, &tree), treeFile)
-	assert.Nil(t, readFile(ruleFile, &ruletree), ruleFile)
+	assert.Nil(t, ReadFile(datafile(treeFile), &tree), treeFile)
+	assert.Nil(t, ReadFile(datafile(ruleFile), &ruletree), ruleFile)
 
 	assert.Len(t, tree, treeLengthExpected, "tree length")
 	tr.traverse("", tree, ruletree)
@@ -61,6 +75,22 @@ func testPodWithRules(t *testing.T, treeFile, ruleFile string,
 	}
 	assert.Equal(t, falseExpected, tr.falseCounter, "falseCounter")
 	assert.Equal(t, trueExpected, tr.trueCounter, "trueCounter")
+}
+
+func TestPodWithWrongType(t *testing.T) {
+	var tr Traverse
+	var tree, ruletree map[string]interface{}
+	assert.Nil(t, ReadFile(datafile("itempods"), &tree), "wrongtype")
+	assert.Nil(t, ReadFile(datafile("itemrule"), &ruletree), "wrongtype")
+
+	tree["apiVersion"] = tr
+	assert.Len(t, tree, 2, "tree length")
+	tr.traverse("", tree, ruletree)
+	assert.Equal(t, 1, tr.errorHistory.Len(), "errors")
+	assert.NotNil(t, tr.errorHistory.Front(), "error history")
+
+	assert.Equal(t, 0, tr.falseCounter, "falseCounter")
+	assert.Equal(t, 1, tr.trueCounter, "trueCounter")
 }
 func TestMain(m *testing.M) {
 	code := m.Run()

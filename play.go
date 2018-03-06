@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -144,37 +145,17 @@ func (t *Traverse) traverse(offset string, tree interface{}, rules interface{}) 
 	case reflect.String, reflect.Float64, reflect.Bool:
 		t.applyRule(offset, treeValue, rulesValue, rules)
 	default:
-		fmt.Printf(" == unknown %q", treeValue)
+		fmt.Printf(" == unknown %v\n", treeValue)
 		t.AddError("found unknown type %v with value %q", treeValue, treeValue)
 	}
 	fmt.Println(offset + ">")
 }
 
-//Play function
-func Play(pods string) {
-
-	var y map[string]interface{}
-	json.Unmarshal([]byte(pods), &y)
-
-	item1 := y["items"].([]interface{})
-	fmt.Printf("%v\n", reflect.TypeOf(item1))
-	item2 := item1[1]
-	fmt.Printf("%v\n", reflect.TypeOf(item2))
-	item3 := item2.(map[string]interface{})
-	fmt.Printf("%v\n", reflect.TypeOf(item3))
-	item4 := item3["metadata"]
-	fmt.Printf("%v\n", reflect.TypeOf(item4))
-	item5 := item4.(map[string]interface{})
-	fmt.Printf("%v\n", reflect.TypeOf(item5))
-	item6 := item5["generateName"]
-
-	fmt.Printf("%v\n", reflect.TypeOf(item6))
-	t := Traverse{}
-	t.traverse("", y, nil)
-
-	//	fmt.Println("nodes = %s", pods)
-}
-
-func main() {
-	Play("")
+//ReadFile reads file f and unmarshal it into t, reporting the error
+func ReadFile(f string, t interface{}) error {
+	b, err := ioutil.ReadFile(f)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, &t)
 }
