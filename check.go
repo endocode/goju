@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+
+	"github.com/golang/glog"
 )
 
 //Check collects all information and methods about checks
@@ -17,7 +19,7 @@ type Check struct {
 // format and args are format used to create a formatted error message
 func (t *Check) AddError(format string, args ...interface{}) {
 	errn := fmt.Sprintf("error #%d: ", t.errorHistory.Len())
-	fmt.Printf(errn+format+"\n", args...)
+	glog.V(2).Infof(errn+format, args...)
 	t.errorHistory.PushBack(fmt.Errorf(errn+format, args...))
 }
 

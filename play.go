@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"reflect"
 	"strings"
+
+	"github.com/golang/glog"
 )
 
 // Traverse is the object collection all data on a traversal
@@ -28,7 +30,7 @@ func cutString(i interface{}, l int) string {
 
 func (t *Traverse) applyRule(offset string, treeValue reflect.Value,
 	rulesValue reflect.Value, rules interface{}) {
-	fmt.Printf("rules value Kind %q\n", rulesValue.Kind())
+	glog.V(5).Info("rules value Kind", rulesValue.Kind())
 	switch rulesValue.Kind() {
 	case reflect.Map, reflect.String:
 		m, ok := rules.(map[string]interface{})
@@ -39,7 +41,7 @@ func (t *Traverse) applyRule(offset string, treeValue reflect.Value,
 				capMethod := strings.Title(k)
 				method := reflect.ValueOf(t.check).MethodByName(capMethod)
 				if method.IsValid() {
-					fmt.Printf("%s\t rules %q (%q, %q)\n", offset, capMethod, v, cutString(tv, 40))
+					glog.V(5).Info(offset, "\t rules", capMethod, v, cutString(tv, 40))
 					method.Call([]reflect.Value{reflect.ValueOf(v), reflect.ValueOf(tv)})
 				} else {
 					switch treeValue.Kind() {
@@ -66,7 +68,7 @@ func (t *Traverse) traverse(offset string, tree interface{}, rules interface{}) 
 	}
 	treeValue := reflect.ValueOf(tree)
 	rulesValue := reflect.ValueOf(rules)
-	fmt.Printf("%s< traverse %v\n", offset, treeValue.Type())
+	glog.V(5).Info(offset, "< traverse", treeValue.Type())
 
 	switch treeValue.Kind() {
 
@@ -95,10 +97,10 @@ func (t *Traverse) traverse(offset string, tree interface{}, rules interface{}) 
 	case reflect.String, reflect.Float64, reflect.Bool:
 		t.applyRule(offset, treeValue, rulesValue, rules)
 	default:
-		fmt.Printf(" == unknown %v\n", treeValue)
+		glog.V(5).Info(" == unknown ", treeValue)
 		t.check.AddError("found unknown type %v with value %q", treeValue, treeValue)
 	}
-	fmt.Println(offset + ">")
+	glog.V(5).Info(offset, ">")
 }
 
 //ReadFile reads file f and unmarshal it into t, reporting the error
