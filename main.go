@@ -19,8 +19,7 @@ func Play(args []string) error {
 		return err
 	}
 
-	var tr Traverse
-	tr.check = &Check{}
+	tr := &Traverse{check: &Check{}}
 
 	tr.traverse("", tree, ruletree)
 

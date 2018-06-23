@@ -28,13 +28,15 @@ func cutString(i interface{}, l int) string {
 
 func (t *Traverse) applyRule(offset string, treeValue reflect.Value,
 	rulesValue reflect.Value, rules interface{}) {
-	if rulesValue.Kind() == reflect.Map {
+	fmt.Printf("rules value Kind %q\n", rulesValue.Kind())
+	switch rulesValue.Kind() {
+	case reflect.Map, reflect.String:
 		m, ok := rules.(map[string]interface{})
-		tv := treeValue.Interface()
 		if ok {
+			tv := treeValue.Interface()
+
 			for k, v := range m {
 				capMethod := strings.Title(k)
-
 				method := reflect.ValueOf(t.check).MethodByName(capMethod)
 				if method.IsValid() {
 					fmt.Printf("%s\t rules %q (%q, %q)\n", offset, capMethod, v, cutString(tv, 40))
@@ -48,8 +50,10 @@ func (t *Traverse) applyRule(offset string, treeValue reflect.Value,
 					}
 				}
 			}
-		} else {
-			t.check.AddError("found unknown rule %v with value %q", rules, rules)
+		}
+	default:
+		{
+			t.check.AddError("found unknown ruleValue %q with value %q", rulesValue.Kind(), rulesValue)
 		}
 	}
 	//	fmt.Printf("# errors %d %d\n", t.falseCounter, t.trueCounter)

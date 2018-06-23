@@ -53,8 +53,7 @@ func TestPlayFalseSecondFile(t *testing.T) {
 
 func TestPlayWithoutFile(t *testing.T) {
 	var tree map[string]interface{}
-	var tr Traverse
-	tr.check = &Check{}
+	tr := &Traverse{check: &Check{}}
 
 	err := ReadFile("notexisting", &tree)
 	tr.check.bookkeep(true, err)
@@ -64,8 +63,7 @@ func TestPlayWithoutFile(t *testing.T) {
 func testPodWithRules(t *testing.T, treeFile, ruleFile string,
 	treeLengthExpected, errorLengthExpected,
 	falseExpected, trueExpected int) {
-	var tr Traverse
-	tr.check = &Check{}
+	tr := &Traverse{check: &Check{}}
 
 	var tree, ruletree map[string]interface{}
 	assert.Nil(t, ReadFile(datafile(treeFile), &tree), treeFile)
@@ -82,8 +80,7 @@ func testPodWithRules(t *testing.T, treeFile, ruleFile string,
 }
 
 func TestPodWithWrongType(t *testing.T) {
-	var tr Traverse
-	tr.check = &Check{}
+	tr := &Traverse{check: &Check{}}
 
 	var tree, ruletree map[string]interface{}
 	assert.Nil(t, ReadFile(datafile("itempods"), &tree), "wrongtype")
@@ -97,6 +94,23 @@ func TestPodWithWrongType(t *testing.T) {
 
 	assert.Equal(t, 0, tr.check.falseCounter, "falseCounter")
 	assert.Equal(t, 1, tr.check.trueCounter, "trueCounter")
+}
+
+func TestPodWithWrongRuleType(t *testing.T) {
+	tr := &Traverse{check: &Check{}}
+
+	var tree, ruletree map[string]interface{}
+	assert.Nil(t, ReadFile(datafile("itempods"), &tree), "wrongtype")
+	assert.Nil(t, ReadFile(datafile("itemrule"), &ruletree), "wrongtype")
+	ruletree["items"] = tr
+	assert.Len(t, tree, 2, "tree length")
+	tr.traverse("", tree, ruletree)
+
+	assert.Equal(t, 2, tr.check.errorHistory.Len(), "errors")
+	assert.NotNil(t, tr.check.errorHistory.Front(), "error history")
+
+	assert.Equal(t, 0, tr.check.falseCounter, "falseCounter")
+	assert.Equal(t, 0, tr.check.trueCounter, "trueCounter")
 }
 func TestMain(m *testing.M) {
 	code := m.Run()
