@@ -8,10 +8,10 @@ It is intended to test JSON files using other json files
 {
   "items": [ {
                "spec": {
-	       "containers": [ {
+                 "containers": [ {
                                  "image": "k8s.gcr.io/heapster-amd64:v1.5.0"
-			       }
-                             ]
+                                 }
+                               ]
                }
              }
            ]
