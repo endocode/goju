@@ -6,13 +6,11 @@ It is intended to test JSON files using other json files
 
 ```javascript
 {
-  "items": [ 
-			       {
-				       "spec": {
-							 "containers": [
-							                 {
-										              "image": "k8s.gcr.io/heapster-amd64:v1.5.0"
-                               }
+  "items": [ {
+               "spec": {
+	       "containers": [ {
+                                 "image": "k8s.gcr.io/heapster-amd64:v1.5.0"
+			       }
                              ]
                }
              }
