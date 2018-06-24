@@ -30,7 +30,7 @@ func cutString(i interface{}, l int) string {
 
 func (t *Traverse) applyRule(offset string, treeValue reflect.Value,
 	rulesValue reflect.Value, rules interface{}) {
-	glog.V(5).Info("rules value Kind", rulesValue.Kind())
+	glog.V(5).Info(offset, "\t rules value Kind", rulesValue.Kind())
 	switch rulesValue.Kind() {
 	case reflect.Map, reflect.String:
 		m, ok := rules.(map[string]interface{})
@@ -41,7 +41,7 @@ func (t *Traverse) applyRule(offset string, treeValue reflect.Value,
 				capMethod := strings.Title(k)
 				method := reflect.ValueOf(t.check).MethodByName(capMethod)
 				if method.IsValid() {
-					glog.V(5).Info(offset, "\t rules", capMethod, v, cutString(tv, 40))
+					glog.V(5).Info(offset, "\t rules ", capMethod, v, cutString(tv, 40))
 					method.Call([]reflect.Value{reflect.ValueOf(v), reflect.ValueOf(tv)})
 				} else {
 					switch treeValue.Kind() {

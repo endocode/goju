@@ -32,23 +32,15 @@ func TestPlayWithUnknownMethod(t *testing.T) {
 }
 
 func TestPlay(t *testing.T) {
-	args := []string{"play", "data/itempods.json", "data/itemrule.json"}
-	assert.Nil(t, Play(args))
-}
-
-func TestPlayFalseNumberOfArgs(t *testing.T) {
-	args := []string{"data/itempods.json", "data/itemrule.json"}
-	assert.NotNil(t, Play(args))
+	assert.Nil(t, Play("data/itempods.json", "data/itemrule.json"))
 }
 
 func TestPlayFalseFirstFile(t *testing.T) {
-	args := []string{"play", "data/nonono.json", "data/itemrule.json"}
-	assert.NotNil(t, Play(args))
+	assert.NotNil(t, Play("data/nonono.json", "data/itemrule.json"))
 }
 
 func TestPlayFalseSecondFile(t *testing.T) {
-	args := []string{"play", "data/itempods.json", "data/nonono.json"}
-	assert.NotNil(t, Play(args))
+	assert.NotNil(t, Play("data/itempods.json", "data/nonono.json"))
 }
 
 func TestPlayWithoutFile(t *testing.T) {
