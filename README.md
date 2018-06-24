@@ -23,14 +23,14 @@ is checked for regular expression by the JSON file
 {
   "items": {
     "length" :"1",
-		"spec":{
-		  "containers":{
-			  "image":{
-				  "matches":"^(gcr.io/(google[-_]containers|k8s-minikube)|k8s.gcr.io)"
-				}
-			}
-		}
-	}
+    "spec":{
+      "containers":{
+        "image":{
+           "matches":"^(gcr.io/(google[-_]containers|k8s-minikube)|k8s.gcr.io)"
+        }
+      }
+    }
+  }
 }
 ```
 
