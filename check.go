@@ -64,3 +64,9 @@ func (t *Check) Min(min string, val int) {
 	m, err := strconv.Atoi(min)
 	t.bookkeep(m <= val, err)
 }
+
+// Eval evaluates an expression
+func (t *Check) Eval(r, s string) {
+	//ToDO
+	glog.V(2).Infof("Not implemented")
+}
