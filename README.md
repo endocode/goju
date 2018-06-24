@@ -44,6 +44,14 @@ The concept is to check configurations by other configurations, and implement ch
 
 The executable checks are invoked by reflection on a _Check_ object and must have the same name as define in the `check.go` file with a leading capital letter.
 
+## Installation
+
+Install _Goju_ by
+
+```bash
+go get github.com/endodoce/goju
+```
+
 ## Usage
 
 Simply call
