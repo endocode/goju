@@ -1,4 +1,4 @@
-package main
+package goju
 
 import (
 	"container/list"

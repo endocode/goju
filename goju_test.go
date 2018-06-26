@@ -1,4 +1,4 @@
-package main
+package goju
 
 import (
 	"os"
@@ -45,17 +45,17 @@ func TestPlayFalseSecondFile(t *testing.T) {
 
 func TestPlayWithoutFile(t *testing.T) {
 	var tree map[string]interface{}
-	tr := &Traverse{check: &Check{}}
+	tr := &TreeCheck{Check: &Check{}}
 
 	err := ReadFile("notexisting", &tree)
-	tr.check.bookkeep(true, err)
-	assert.NotNil(t, tr.check.errorHistory.Front())
+	tr.Check.bookkeep(true, err)
+	assert.NotNil(t, tr.Check.errorHistory.Front())
 }
 
 func testPodWithRules(t *testing.T, treeFile, ruleFile string,
 	treeLengthExpected, errorLengthExpected,
 	falseExpected, trueExpected int) {
-	tr := &Traverse{check: &Check{}}
+	tr := &TreeCheck{Check: &Check{}}
 
 	var tree, ruletree map[string]interface{}
 	assert.Nil(t, ReadFile(datafile(treeFile), &tree), treeFile)
@@ -63,16 +63,16 @@ func testPodWithRules(t *testing.T, treeFile, ruleFile string,
 
 	assert.Len(t, tree, treeLengthExpected, "tree length")
 	tr.traverse("", tree, ruletree)
-	assert.Equal(t, errorLengthExpected, tr.check.errorHistory.Len(), "errors")
+	assert.Equal(t, errorLengthExpected, tr.Check.errorHistory.Len(), "errors")
 	if errorLengthExpected == 0 {
-		assert.Nil(t, tr.check.errorHistory.Front(), "error history")
+		assert.Nil(t, tr.Check.errorHistory.Front(), "error history")
 	}
-	assert.Equal(t, falseExpected, tr.check.falseCounter, "falseCounter")
-	assert.Equal(t, trueExpected, tr.check.trueCounter, "trueCounter")
+	assert.Equal(t, falseExpected, tr.Check.falseCounter, "falseCounter")
+	assert.Equal(t, trueExpected, tr.Check.trueCounter, "trueCounter")
 }
 
 func TestPodWithWrongType(t *testing.T) {
-	tr := &Traverse{check: &Check{}}
+	tr := &TreeCheck{Check: &Check{}}
 
 	var tree, ruletree map[string]interface{}
 	assert.Nil(t, ReadFile(datafile("itempods"), &tree), "wrongtype")
@@ -81,15 +81,15 @@ func TestPodWithWrongType(t *testing.T) {
 	tree["apiVersion"] = tr
 	assert.Len(t, tree, 2, "tree length")
 	tr.traverse("", tree, ruletree)
-	assert.Equal(t, 1, tr.check.errorHistory.Len(), "errors")
-	assert.NotNil(t, tr.check.errorHistory.Front(), "error history")
+	assert.Equal(t, 1, tr.Check.errorHistory.Len(), "errors")
+	assert.NotNil(t, tr.Check.errorHistory.Front(), "error history")
 
-	assert.Equal(t, 0, tr.check.falseCounter, "falseCounter")
-	assert.Equal(t, 1, tr.check.trueCounter, "trueCounter")
+	assert.Equal(t, 0, tr.Check.falseCounter, "falseCounter")
+	assert.Equal(t, 1, tr.Check.trueCounter, "trueCounter")
 }
 
 func TestPodWithWrongRuleType(t *testing.T) {
-	tr := &Traverse{check: &Check{}}
+	tr := &TreeCheck{Check: &Check{}}
 
 	var tree, ruletree map[string]interface{}
 	assert.Nil(t, ReadFile(datafile("itempods"), &tree), "wrongtype")
@@ -98,11 +98,11 @@ func TestPodWithWrongRuleType(t *testing.T) {
 	assert.Len(t, tree, 2, "tree length")
 	tr.traverse("", tree, ruletree)
 
-	assert.Equal(t, 2, tr.check.errorHistory.Len(), "errors")
-	assert.NotNil(t, tr.check.errorHistory.Front(), "error history")
+	assert.Equal(t, 2, tr.Check.errorHistory.Len(), "errors")
+	assert.NotNil(t, tr.Check.errorHistory.Front(), "error history")
 
-	assert.Equal(t, 0, tr.check.falseCounter, "falseCounter")
-	assert.Equal(t, 0, tr.check.trueCounter, "trueCounter")
+	assert.Equal(t, 0, tr.Check.falseCounter, "falseCounter")
+	assert.Equal(t, 0, tr.Check.trueCounter, "trueCounter")
 }
 func TestMain(m *testing.M) {
 	code := m.Run()

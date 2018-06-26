@@ -1,12 +1,10 @@
-package main //Play function
+package goju //Play function
 import (
 	"flag"
 	"os"
 
 	"github.com/golang/glog"
 )
-
-var loglevel = glog.Level(2)
 
 // Play calls traverse check a json files by the rules in the second json file
 func Play(json, rule string) error {
@@ -22,13 +20,13 @@ func Play(json, rule string) error {
 		return err
 	}
 
-	tr := &Traverse{check: &Check{}}
+	tr := &TreeCheck{Check: &Check{}}
 
 	tr.traverse("", tree, ruletree)
 
-	glog.V(1).Infof("Errors       : %d\n", tr.check.errorHistory.Len())
-	glog.V(1).Infof("Checks   true: %d\n", tr.check.trueCounter)
-	glog.V(1).Infof("Checks  false: %d\n", tr.check.falseCounter)
+	glog.V(1).Infof("Errors       : %d\n", tr.Check.errorHistory.Len())
+	glog.V(1).Infof("Checks   true: %d\n", tr.Check.trueCounter)
+	glog.V(1).Infof("Checks  false: %d\n", tr.Check.falseCounter)
 
 	return nil
 }
@@ -46,7 +44,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	loglevel = glog.Level(2)
 	err := Play(json, rule)
 	if err != nil {
 		glog.V(0).Infof("Error: %s", err)
