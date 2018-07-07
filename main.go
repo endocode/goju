@@ -24,9 +24,9 @@ func Play(json, rule string) error {
 
 	tr.traverse("", tree, ruletree)
 
-	glog.V(1).Infof("Errors       : %d\n", tr.Check.errorHistory.Len())
-	glog.V(1).Infof("Checks   true: %d\n", tr.Check.trueCounter)
-	glog.V(1).Infof("Checks  false: %d\n", tr.Check.falseCounter)
+	glog.V(1).Infof("Errors       : %d\n", tr.Check.ErrorHistory.Len())
+	glog.V(1).Infof("Checks   true: %d\n", tr.Check.TrueCounter)
+	glog.V(1).Infof("Checks  false: %d\n", tr.Check.FalseCounter)
 
 	return nil
 }

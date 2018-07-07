@@ -49,7 +49,7 @@ func TestPlayWithoutFile(t *testing.T) {
 
 	err := ReadFile("notexisting", &tree)
 	tr.Check.bookkeep(true, err)
-	assert.NotNil(t, tr.Check.errorHistory.Front())
+	assert.NotNil(t, tr.Check.ErrorHistory.Front())
 }
 
 func testPodWithRules(t *testing.T, treeFile, ruleFile string,
@@ -63,12 +63,12 @@ func testPodWithRules(t *testing.T, treeFile, ruleFile string,
 
 	assert.Len(t, tree, treeLengthExpected, "tree length")
 	tr.traverse("", tree, ruletree)
-	assert.Equal(t, errorLengthExpected, tr.Check.errorHistory.Len(), "errors")
+	assert.Equal(t, errorLengthExpected, tr.Check.ErrorHistory.Len(), "errors")
 	if errorLengthExpected == 0 {
-		assert.Nil(t, tr.Check.errorHistory.Front(), "error history")
+		assert.Nil(t, tr.Check.ErrorHistory.Front(), "error history")
 	}
-	assert.Equal(t, falseExpected, tr.Check.falseCounter, "falseCounter")
-	assert.Equal(t, trueExpected, tr.Check.trueCounter, "trueCounter")
+	assert.Equal(t, falseExpected, tr.Check.FalseCounter, "falseCounter")
+	assert.Equal(t, trueExpected, tr.Check.TrueCounter, "trueCounter")
 }
 
 func TestPodWithWrongType(t *testing.T) {
@@ -81,11 +81,11 @@ func TestPodWithWrongType(t *testing.T) {
 	tree["apiVersion"] = tr
 	assert.Len(t, tree, 2, "tree length")
 	tr.traverse("", tree, ruletree)
-	assert.Equal(t, 1, tr.Check.errorHistory.Len(), "errors")
-	assert.NotNil(t, tr.Check.errorHistory.Front(), "error history")
+	assert.Equal(t, 1, tr.Check.ErrorHistory.Len(), "errors")
+	assert.NotNil(t, tr.Check.ErrorHistory.Front(), "error history")
 
-	assert.Equal(t, 0, tr.Check.falseCounter, "falseCounter")
-	assert.Equal(t, 1, tr.Check.trueCounter, "trueCounter")
+	assert.Equal(t, 0, tr.Check.FalseCounter, "falseCounter")
+	assert.Equal(t, 1, tr.Check.TrueCounter, "trueCounter")
 }
 
 func TestPodWithWrongRuleType(t *testing.T) {
@@ -98,11 +98,11 @@ func TestPodWithWrongRuleType(t *testing.T) {
 	assert.Len(t, tree, 2, "tree length")
 	tr.traverse("", tree, ruletree)
 
-	assert.Equal(t, 2, tr.Check.errorHistory.Len(), "errors")
-	assert.NotNil(t, tr.Check.errorHistory.Front(), "error history")
+	assert.Equal(t, 2, tr.Check.ErrorHistory.Len(), "errors")
+	assert.NotNil(t, tr.Check.ErrorHistory.Front(), "error history")
 
-	assert.Equal(t, 0, tr.Check.falseCounter, "falseCounter")
-	assert.Equal(t, 0, tr.Check.trueCounter, "trueCounter")
+	assert.Equal(t, 0, tr.Check.FalseCounter, "falseCounter")
+	assert.Equal(t, 0, tr.Check.TrueCounter, "trueCounter")
 }
 func TestMain(m *testing.M) {
 	code := m.Run()

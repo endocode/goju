@@ -70,7 +70,7 @@ func (t *TreeCheck) Traverse(tree interface{}, rules interface{}) {
 
 func (t *TreeCheck) traverse(offset string, tree interface{}, rules interface{}) {
 	if tree == nil || rules == nil {
-		//		fmt.Printf(offset+"< traverse t is nil=%t r is nil=%t>\n", tree == nil, rules == nil)
+		glog.V(5).Infof(offset+"< traverse t is nil=%t r is nil=%t>\n", tree == nil, rules == nil)
 		return
 	}
 	treeValue := reflect.ValueOf(tree)
