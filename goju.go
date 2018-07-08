@@ -1,6 +1,7 @@
 package goju
 
 import (
+	"container/list"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,7 +13,30 @@ import (
 
 // TreeCheck is the object collection all data on a traversal
 type TreeCheck struct {
-	Check *Check
+	Check                     *Check
+	ErrorHistory              list.List
+	TrueCounter, FalseCounter int
+}
+
+// AddError adds an error to the list of errors,
+// format and args are format used to create a formatted error message
+func (t *TreeCheck) AddError(format string, args ...interface{}) {
+	errn := fmt.Sprintf("error #%d: ", t.ErrorHistory.Len())
+	glog.V(2).Infof(errn+format, args...)
+	t.ErrorHistory.PushBack(fmt.Errorf(errn+format, args...))
+}
+
+func (t *TreeCheck) bookkeep(b bool, err error) {
+	if err == nil {
+		if b {
+			t.TrueCounter++
+		} else {
+			t.FalseCounter++
+		}
+	} else {
+		errn := fmt.Errorf("error #%d: %s", t.ErrorHistory.Len(), err.Error())
+		t.ErrorHistory.PushBack(errn)
+	}
 }
 
 func cutString(i interface{}, l int) string {
@@ -42,12 +66,28 @@ func (t *TreeCheck) applyRule(offset string, treeValue reflect.Value,
 				method := reflect.ValueOf(t.Check).MethodByName(capMethod)
 				if method.IsValid() {
 					glog.V(5).Info(offset, "\t rules ", capMethod, v, cutString(tv, 40))
-					method.Call([]reflect.Value{reflect.ValueOf(v), reflect.ValueOf(tv)})
+					result := method.Call([]reflect.Value{reflect.ValueOf(v), reflect.ValueOf(tv)})
+					ok := result[0].Bool()
+					err := result[1].Interface()
+					if err == nil {
+						if ok {
+							t.TrueCounter++
+						} else {
+							t.FalseCounter++
+						}
+						if glog.V(2) {
+							glog.V(2).Infof("result %t, #%d, calling: %s with args %s %s",
+								ok, t.TrueCounter+t.FalseCounter, capMethod, v, tv)
+						}
+					} else {
+						e := err.(error)
+						t.AddError("error #%d, %s calling: %s with args %s %s", e, t.ErrorHistory.Len(), capMethod, v, tv)
+					}
 				} else {
 					switch treeValue.Kind() {
 					case reflect.String, reflect.Float64, reflect.Bool:
 						{
-							t.Check.AddError("unknown method %q requested with args(%q, %q)", capMethod, v, cutString(tv, 40))
+							t.AddError("unknown method %q requested with args(%q, %q)", capMethod, v, cutString(tv, 40))
 						}
 					}
 				}
@@ -55,7 +95,7 @@ func (t *TreeCheck) applyRule(offset string, treeValue reflect.Value,
 		}
 	default:
 		{
-			t.Check.AddError("found unknown ruleValue %q with value %q", rulesValue.Kind(), rulesValue)
+			t.AddError("found unknown ruleValue %q with value %q", rulesValue.Kind(), rulesValue)
 		}
 	}
 	//	fmt.Printf("# errors %d %d\n", t.falseCounter, t.trueCounter)
@@ -105,7 +145,7 @@ func (t *TreeCheck) traverse(offset string, tree interface{}, rules interface{})
 		t.applyRule(offset, treeValue, rulesValue, rules)
 	default:
 		glog.V(5).Info(" == unknown ", treeValue)
-		t.Check.AddError("found unknown type %v with value %q", treeValue, treeValue)
+		t.AddError("found unknown type %v with value %q", treeValue, treeValue)
 	}
 	glog.V(5).Info(offset, ">")
 }
@@ -117,4 +157,29 @@ func ReadFile(f string, t interface{}) error {
 		return err
 	}
 	return json.Unmarshal(b, &t)
+}
+
+// Play calls traverse check a json files by the rules in the second json file
+func Play(json, rule string) error {
+	//usage := fmt.Sprintf("usage: %s [options] <data> <rules>\n\noptions are:\n\n", os.Args[0])
+
+	var tree, ruletree map[string]interface{}
+	err := ReadFile(json, &tree)
+	if err != nil {
+		return err
+	}
+	err = ReadFile(rule, &ruletree)
+	if err != nil {
+		return err
+	}
+
+	tr := &TreeCheck{Check: &Check{}}
+
+	tr.Traverse(tree, ruletree)
+
+	glog.V(1).Infof("Errors       : %d\n", tr.ErrorHistory.Len())
+	glog.V(1).Infof("Checks   true: %d\n", tr.TrueCounter)
+	glog.V(1).Infof("Checks  false: %d\n", tr.FalseCounter)
+
+	return nil
 }

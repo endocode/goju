@@ -1,72 +1,44 @@
 package goju
 
 import (
-	"container/list"
-	"fmt"
+	"errors"
 	"regexp"
 	"strconv"
-
-	"github.com/golang/glog"
 )
 
-//Check collects all information and methods about checks
-type Check struct {
-	ErrorHistory              list.List
-	TrueCounter, FalseCounter int
-}
-
-// AddError adds an error to the list of errors,
-// format and args are format used to create a formatted error message
-func (t *Check) AddError(format string, args ...interface{}) {
-	errn := fmt.Sprintf("error #%d: ", t.ErrorHistory.Len())
-	glog.V(2).Infof(errn+format, args...)
-	t.ErrorHistory.PushBack(fmt.Errorf(errn+format, args...))
-}
-
-func (t *Check) bookkeep(b bool, err error) {
-	if err == nil {
-		if b {
-			t.TrueCounter++
-		} else {
-			t.FalseCounter++
-		}
-	} else {
-		errn := fmt.Errorf("error #%d: %s", t.ErrorHistory.Len(), err.Error())
-		t.ErrorHistory.PushBack(errn)
-	}
-}
+//Check is the class providing the methods for the checks
+//Each method must return a (bool, error) pair
+type Check struct{}
 
 // Equals tracks if both strings are equal
-func (t *Check) Equals(ruleValue, treeValue string) {
-	t.bookkeep(ruleValue == treeValue, nil)
+func (t *Check) Equals(ruleValue, treeValue string) (bool, error) {
+	return ruleValue == treeValue, nil
 }
 
 // Matches tracks if r matches s as a regular expression
-func (t *Check) Matches(r, s string) {
-	match, err := regexp.MatchString(r, s)
-	t.bookkeep(match, err)
+func (t *Check) Matches(r, s string) (bool, error) {
+	return regexp.MatchString(r, s)
 }
 
 // Length compares length to the len of the arry
-func (t *Check) Length(length string, array []interface{}) {
+func (t *Check) Length(length string, array []interface{}) (bool, error) {
 	l, err := strconv.Atoi(length)
-	t.bookkeep(l == len(array), err)
+	return l == len(array), err
 }
 
 // Max compares max to val
-func (t *Check) Max(max string, val int) {
+func (t *Check) Max(max string, val int) (bool, error) {
 	m, err := strconv.Atoi(max)
-	t.bookkeep(m >= val, err)
+	return m >= val, err
 }
 
 // Min compares min to the val
-func (t *Check) Min(min string, val int) {
+func (t *Check) Min(min string, val int) (bool, error) {
 	m, err := strconv.Atoi(min)
-	t.bookkeep(m <= val, err)
+	return m <= val, err
 }
 
 // Eval evaluates an expression
-func (t *Check) Eval(r, s string) {
-	//ToDO
-	glog.V(2).Infof("Not implemented")
+func (t *Check) Eval(r, s string) (bool, error) {
+	return false, errors.New("Not implemented")
 }
