@@ -52,7 +52,7 @@ func cutString(i interface{}, l int) string {
 	return out
 }
 
-func (t *TreeCheck) applyRule(offset string, treeValue reflect.Value,
+func (t *TreeCheck) applyRule(offset, path string, treeValue reflect.Value,
 	rulesValue reflect.Value, rules interface{}) {
 	glog.V(5).Info(offset, "\t rules value Kind", rulesValue.Kind())
 	switch rulesValue.Kind() {
@@ -66,7 +66,8 @@ func (t *TreeCheck) applyRule(offset string, treeValue reflect.Value,
 				method := reflect.ValueOf(t.Check).MethodByName(capMethod)
 				if method.IsValid() {
 					glog.V(5).Info(offset, "\t rules ", capMethod, v, cutString(tv, 40))
-					result := method.Call([]reflect.Value{reflect.ValueOf(v), reflect.ValueOf(tv)})
+					conv := fmt.Sprintf("%v", reflect.ValueOf(v))
+					result := method.Call([]reflect.Value{reflect.ValueOf(conv), reflect.ValueOf(tv)})
 					ok := result[0].Bool()
 					err := result[1].Interface()
 					if err == nil {
@@ -76,12 +77,12 @@ func (t *TreeCheck) applyRule(offset string, treeValue reflect.Value,
 							t.FalseCounter++
 						}
 						if glog.V(2) {
-							glog.V(2).Infof("result %t, #%d, calling: %s with args %s %s",
-								ok, t.TrueCounter+t.FalseCounter, capMethod, v, tv)
+							glog.V(2).Infof("#%d: %s.%s(%q,%q): %t",
+								t.TrueCounter+t.FalseCounter, path, capMethod, v, tv, ok)
 						}
 					} else {
 						e := err.(error)
-						t.AddError("error #%d, %s calling: %s with args %s %s", e, t.ErrorHistory.Len(), capMethod, v, tv)
+						t.AddError("error #%d, %q:  %s.%s(%q,%q)", e, t.ErrorHistory.Len(), path, capMethod, v, tv)
 					}
 				} else {
 					switch treeValue.Kind() {
@@ -105,10 +106,10 @@ func (t *TreeCheck) applyRule(offset string, treeValue reflect.Value,
 // Both are dictionaries with strings as keys
 // and dictionaries or strings as value
 func (t *TreeCheck) Traverse(tree interface{}, rules interface{}) {
-	t.traverse("", tree, rules)
+	t.traverse("", "", tree, rules)
 }
 
-func (t *TreeCheck) traverse(offset string, tree interface{}, rules interface{}) {
+func (t *TreeCheck) traverse(offset, path string, tree interface{}, rules interface{}) {
 	if tree == nil || rules == nil {
 		glog.V(5).Infof(offset+"< traverse t is nil=%t r is nil=%t>\n", tree == nil, rules == nil)
 		return
@@ -120,13 +121,14 @@ func (t *TreeCheck) traverse(offset string, tree interface{}, rules interface{})
 	switch treeValue.Kind() {
 
 	case reflect.Slice, reflect.Array:
-		t.applyRule(offset, treeValue,
-			rulesValue, rules)
-
-		for i, vi := range tree.([]interface{}) {
-			index := fmt.Sprintf("%d:", i)
-			index = ""
-			t.traverse(offset+index+"\t", vi, rules)
+		t.applyRule(offset, path, treeValue, rulesValue, rules)
+		ti, ok := tree.([]interface{})
+		if ok {
+			for i, vi := range ti {
+				index := fmt.Sprintf("%d:", i)
+				index = ""
+				t.traverse(offset+index+"\t", fmt.Sprintf(".%s[%d]", path, +i), vi, rules)
+			}
 		}
 
 	case reflect.Map:
@@ -134,15 +136,15 @@ func (t *TreeCheck) traverse(offset string, tree interface{}, rules interface{})
 			r, ok := rulesValue.Interface().(map[string]interface{})
 			if ok {
 				// fmt.Printf("### ok key %q %v =: %q \n", k, cutString(v, 30), cutString(r[k], 30))
-				t.traverse(offset+"\t ", v, r[k])
+				t.traverse(offset+"\t ", fmt.Sprintf("%s.%s", path, k), v, r[k])
 			} else {
 				// fmt.Printf("#### not ok")
-				t.applyRule(offset, treeValue, rulesValue, r)
+				t.applyRule(offset, path, treeValue, rulesValue, r)
 			}
 		}
 
 	case reflect.String, reflect.Float64, reflect.Bool:
-		t.applyRule(offset, treeValue, rulesValue, rules)
+		t.applyRule(offset, path, treeValue, rulesValue, rules)
 	default:
 		glog.V(5).Info(" == unknown ", treeValue)
 		t.AddError("found unknown type %v with value %q", treeValue, treeValue)
