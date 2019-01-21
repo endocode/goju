@@ -3,6 +3,7 @@ package goju
 import (
 	"container/list"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"reflect"
@@ -72,6 +73,39 @@ func ToStringValue(i interface{}) reflect.Value {
 	return f
 }
 
+func (t *TreeCheck) methodCall(capMethod, offset, path string, v, tv interface{}) interface{} {
+	method := reflect.ValueOf(t.Check).MethodByName(capMethod)
+	if method.IsValid() {
+		glog.V(5).Infof("%s\t rules %s %s %s ", offset, capMethod, v, cutString(tv, 40))
+
+		conv := ToStringValue(v)
+		tvconv := ToStringValue(tv)
+
+		result := method.Call([]reflect.Value{conv, tvconv})
+
+		ok := result[0].Bool()
+		err := result[1].Interface()
+		level := 2
+		if ok {
+			t.TrueCounter++
+		} else {
+			t.FalseCounter++
+			level = 1
+		}
+		threshold := glog.Level(level)
+		if glog.V(threshold) {
+			glog.V(threshold).Infof("#%d: %s.%s(%q,%q): %t",
+				t.TrueCounter+t.FalseCounter, path, capMethod, conv, tvconv, ok)
+		}
+		return err
+	}
+
+	msg := fmt.Sprintf("no method %q", capMethod)
+	glog.V(1).Infof(msg)
+
+	return errors.New(msg)
+}
+
 func (t *TreeCheck) applyRule(offset, path string, treeValue reflect.Value,
 	rulesValue reflect.Value, rules interface{}) {
 	glog.V(5).Info(offset, "\t rules value Kind ", rulesValue.Kind())
@@ -83,37 +117,13 @@ func (t *TreeCheck) applyRule(offset, path string, treeValue reflect.Value,
 
 			for k, v := range m {
 				capMethod := strings.Title(k)
-				method := reflect.ValueOf(t.Check).MethodByName(capMethod)
-				if method.IsValid() {
-					glog.V(5).Infof("%s\t rules %s %s %s ", offset, capMethod, v, cutString(tv, 40))
-					conv := ToStringValue(v)
-					tvconv := ToStringValue(tv)
-
-					result := method.Call([]reflect.Value{conv, tvconv})
-
-					ok := result[0].Bool()
-					err := result[1].Interface()
-					threshold := glog.Level(2)
-					if err == nil {
-						if ok {
-							t.TrueCounter++
-						} else {
-							t.FalseCounter++
-							threshold = glog.Level(1)
-						}
-						if glog.V(threshold) {
-							glog.V(threshold).Infof("#%d: %s.%s(%q,%q): %t",
-								t.TrueCounter+t.FalseCounter, path, capMethod, conv, tvconv, ok)
-						}
-					} else {
-						e := err.(error)
-						t.AddError("error #%d, %q:  %s.%s(%q,%q)", e, t.ErrorHistory.Len(), path, capMethod, conv, tvconv)
-					}
-				} else {
+				err := t.methodCall(capMethod, path, offset, v, tv)
+				if err != nil {
 					switch treeValue.Kind() {
 					case reflect.String, reflect.Float64, reflect.Bool:
 						{
-							t.AddError("unknown method %q requested with args(%q, %q)", capMethod, v, cutString(tv, 40))
+							e, _ := err.(error)
+							t.AddError(e.Error())
 						}
 					}
 				}
