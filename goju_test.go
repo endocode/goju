@@ -62,7 +62,7 @@ func testPodWithRules(t *testing.T, treeFile, ruleFile string,
 	assert.Nil(t, ReadFile(datafile(ruleFile), &ruletree), ruleFile)
 
 	assert.Len(t, tree, treeLengthExpected, "tree length")
-	tr.traverse("", tree, ruletree)
+	tr.traverse("", "/", tree, ruletree)
 	assert.Equal(t, errorLengthExpected, tr.ErrorHistory.Len(), "errors")
 	if errorLengthExpected == 0 {
 		assert.Nil(t, tr.ErrorHistory.Front(), "error history")
@@ -80,7 +80,7 @@ func TestPodWithWrongType(t *testing.T) {
 
 	tree["apiVersion"] = tr
 	assert.Len(t, tree, 2, "tree length")
-	tr.traverse("", tree, ruletree)
+	tr.traverse("", "/", tree, ruletree)
 	assert.Equal(t, 1, tr.ErrorHistory.Len(), "errors")
 	assert.NotNil(t, tr.ErrorHistory.Front(), "error history")
 
@@ -96,7 +96,7 @@ func TestPodWithWrongRuleType(t *testing.T) {
 	assert.Nil(t, ReadFile(datafile("itemrule"), &ruletree), "wrongtype")
 	ruletree["items"] = tr
 	assert.Len(t, tree, 2, "tree length")
-	tr.traverse("", tree, ruletree)
+	tr.traverse("", "/", tree, ruletree)
 
 	assert.Equal(t, 2, tr.ErrorHistory.Len(), "errors")
 	assert.NotNil(t, tr.ErrorHistory.Front(), "error history")
@@ -104,6 +104,15 @@ func TestPodWithWrongRuleType(t *testing.T) {
 	assert.Equal(t, 0, tr.FalseCounter, "falseCounter")
 	assert.Equal(t, 0, tr.TrueCounter, "trueCounter")
 }
+
+func TestPlayWithWrongNumberInsteadString(t *testing.T) {
+	assert.Nil(t, Play("data/fullpods.json", "data/wrongnumber.json"))
+}
+
+func TestPlayPrivilegedBool(t *testing.T) {
+	assert.Nil(t, Play("data/privileged.json", "data/bool.json"))
+}
+
 func TestMain(m *testing.M) {
 	code := m.Run()
 
